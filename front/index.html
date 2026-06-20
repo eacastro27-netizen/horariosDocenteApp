@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horarios Docentes — CIAF</title>
+  <noscript>
+    <style>body { display:none; } #msg-noscript { display:block !important; }</style>
+  </noscript>
+  <style>
+    /* ── Reset y base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Courier New", Courier, monospace;
+      background: #f5f5f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Cabecera ─────────────────────────────────────────────────────── */
+    header {
+      width: 100%;
+      max-width: 820px;
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    header p {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 0.2rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Contenedor principal ─────────────────────────────────────────── */
+    #app {
+      width: 100%;
+      max-width: 820px;
+    }
+
+    /* ── Menú ─────────────────────────────────────────────────────────── */
+    #vista-menu { display: block; }
+    #vista-menu h2 {
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+      color: #444;
+    }
+    .menu-botones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    /* ── Botones ──────────────────────────────────────────────────────── */
+    button {
+      font-family: inherit;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: 1.5px solid #1a1a1a;
+      background: #fff;
+      color: #1a1a1a;
+      padding: 0.55rem 1.1rem;
+      transition: background 0.15s, color 0.15s;
+    }
+    button:hover:not(:disabled) { background: #1a1a1a; color: #fff; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.btn-primario {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    button.btn-primario:hover:not(:disabled) { background: #444; }
+
+    /* ── Vista de formulario ──────────────────────────────────────────── */
+    .vista-form { display: none; }
+    .vista-form h2 {
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.5rem;
+    }
+
+    /* ── Campos del formulario ────────────────────────────────────────── */
+    .campo {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1rem;
+    }
+    .campo label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 0.3rem;
+    }
+    .campo input,
+    .campo select {
+      font-family: inherit;
+      font-size: 0.85rem;
+      border: 1px solid #aaa;
+      padding: 0.5rem 0.7rem;
+      background: #fff;
+      color: #1a1a1a;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .campo input:focus,
+    .campo select:focus { border-color: #1a1a1a; }
+    .campo input:disabled,
+    .campo select:disabled { background: #eee; color: #888; }
+
+    /* ── Acciones del formulario ──────────────────────────────────────── */
+    .acciones {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    /* ── Área de mensajes ─────────────────────────────────────────────── */
+    .area-msg {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      min-height: 1.2rem;
+      letter-spacing: 0.05em;
+    }
+    .area-msg.ok    { color: #2a6e2a; }
+    .area-msg.error { color: #b00; }
+
+    /* ── Vista listado ────────────────────────────────────────────────── */
+    #vista-listado { display: none; }
+    #vista-listado h2 {
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.5rem;
+    }
+    .listado-controles {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      margin-bottom: 1rem;
+    }
+    .listado-controles select,
+    .listado-controles input {
+      font-family: inherit;
+      font-size: 0.8rem;
+      border: 1px solid #aaa;
+      padding: 0.45rem 0.6rem;
+      background: #fff;
+    }
+    #resumen-listado {
+      font-size: 0.75rem;
+      color: #555;
+      margin-bottom: 0.8rem;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Tabla ────────────────────────────────────────────────────────── */
+    .tabla-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    th {
+      background: #1a1a1a;
+      color: #fff;
+      text-align: left;
+      padding: 0.5rem 0.7rem;
+      letter-spacing: 0.08em;
+      font-weight: normal;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+    td {
+      border-bottom: 1px solid #ddd;
+      padding: 0.5rem 0.7rem;
+    }
+    tr:nth-child(even) td { background: #fafaf8; }
+
+    /* ── Vista salir ──────────────────────────────────────────────────── */
+    #vista-salir { display: none; padding: 1rem 0; }
+    #vista-salir p { font-size: 0.85rem; margin-bottom: 1.2rem; line-height: 1.6; }
+
+    /* ── Noscript ─────────────────────────────────────────────────────── */
+    #msg-noscript {
+      display: none;
+      font-size: 0.9rem;
+      padding: 2rem;
+      border: 1px solid #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="msg-noscript">Este aplicativo requiere JavaScript habilitado.</div>
+
+  <header>
+    <h1>Administración de Horarios</h1>
+    <p>Corporación Instituto de Administración y Finanzas — CIAF</p>
+  </header>
+
+  <main id="app">
+
+    <!-- ════════════ MENÚ ════════════ -->
+    <section id="vista-menu">
+      <h2>Selecciona una opción del menú.</h2>
+      <div class="menu-botones">
+        <button onclick="mostrarVista('crear')">Crear horario</button>
+        <button onclick="mostrarVista('editar')">Editar horario</button>
+        <button onclick="mostrarVista('borrar')">Borrar horario</button>
+        <button onclick="cargarListado()">Listado de horarios</button>
+        <button onclick="mostrarVista('salir')">Salir del programa</button>
+      </div>
+    </section>
+
+    <!-- ════════════ CREAR ════════════ -->
+    <section id="vista-crear" class="vista-form">
+      <h2>Crear horario</h2>
+      <div id="form-crear">
+        <div class="campo">
+          <label for="c-docente">Docente</label>
+          <input type="text" id="c-docente" maxlength="100" />
+        </div>
+        <div class="campo">
+          <label for="c-facultad">Facultad</label>
+          <select id="c-facultad" onchange="actualizarCarreras('c-facultad','c-carrera','c-materia')">
+            <option value="">— seleccione —</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="c-carrera">Carrera</label>
+          <select id="c-carrera" onchange="actualizarMaterias('c-carrera','c-materia')">
+            <option value="">— seleccione —</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="c-materia">Materia</label>
+          <select id="c-materia">
+            <option value="">— seleccione —</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="c-fecha">Fecha de clase</label>
+          <input type="date" id="c-fecha" />
+        </div>
+        <div class="campo">
+          <label for="c-hinicia">Hora de inicio</label>
+          <input type="time" id="c-hinicia" />
+        </div>
+        <div class="campo">
+          <label for="c-htermina">Hora de termina</label>
+          <input type="time" id="c-htermina" />
+        </div>
+      </div>
+      <div class="acciones">
+        <button class="btn-primario" id="btn-guardar" onclick="guardarHorario()">Guardar</button>
+        <button onclick="cancelarVista('crear')">Cancelar</button>
+      </div>
+      <div id="msg-crear" class="area-msg"></div>
+    </section>
+
+    <!-- ════════════ EDITAR ════════════ -->
+    <section id="vista-editar" class="vista-form">
+      <h2>Editar horario</h2>
+      <div class="campo">
+        <label for="e-id">ID del horario</label>
+        <input type="number" id="e-id" min="1" placeholder="Ingrese el ID" />
+      </div>
+      <div class="acciones" style="margin-top:0.5rem; margin-bottom:1rem;">
+        <button onclick="buscarParaEditar()">Buscar</button>
+        <button onclick="cancelarVista('crear')">Cancelar</button>
+      </div>
+      <div id="form-editar" style="display:none;">
+        <div class="campo">
+          <label for="e-docente">Docente</label>
+          <input type="text" id="e-docente" maxlength="100" />
+        </div>
+        <div class="campo">
+          <label for="e-facultad">Facultad</label>
+          <select id="e-facultad" onchange="actualizarCarreras('e-facultad','e-carrera','e-materia')">
+            <option value="">— seleccione —</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="e-carrera">Carrera</label>
+          <select id="e-carrera" onchange="actualizarMaterias('e-carrera','e-materia')">
+            <option value="">— seleccione —</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="e-materia">Materia</label>
+          <select id="e-materia">
+            <option value="">— seleccione —</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="e-fecha">Fecha de clase</label>
+          <input type="date" id="e-fecha" />
+        </div>
+        <div class="campo">
+          <label for="e-hinicia">Hora de inicio</label>
+          <input type="time" id="e-hinicia" />
+        </div>
+        <div class="campo">
+          <label for="e-htermina">Hora de termina</label>
+          <input type="time" id="e-htermina" />
+        </div>
+        <div class="acciones">
+          <button class="btn-primario" id="btn-editar" onclick="editarHorario()">Editar</button>
+          <button onclick="cancelarVista('editar')">Cancelar</button>
+        </div>
+      </div>
+      <div id="msg-editar" class="area-msg"></div>
+    </section>
+
+    <!-- ════════════ BORRAR ════════════ -->
+    <section id="vista-borrar" class="vista-form">
+      <h2>Borrar horario</h2>
+      <div class="campo">
+        <label for="b-id">ID del horario</label>
+        <input type="number" id="b-id" min="1" placeholder="Ingrese el ID" />
+      </div>
+      <div class="acciones" style="margin-top:0.5rem; margin-bottom:1rem;">
+        <button onclick="buscarParaBorrar()">Buscar</button>
+        <button onclick="cancelarVista('crear')">Cancelar</button>
+      </div>
+      <div id="form-borrar" style="display:none;">
+        <div class="campo">
+          <label for="b-docente">Docente</label>
+          <input type="text" id="b-docente" />
+        </div>
+        <div class="campo">
+          <label for="b-facultad">Facultad</label>
+          <input type="text" id="b-facultad" disabled />
+        </div>
+        <div class="campo">
+          <label for="b-carrera">Carrera</label>
+          <input type="text" id="b-carrera" disabled />
+        </div>
+        <div class="campo">
+          <label for="b-materia">Materia</label>
+          <input type="text" id="b-materia" disabled />
+        </div>
+        <div class="campo">
+          <label for="b-fecha">Fecha de clase</label>
+          <input type="text" id="b-fecha" disabled />
+        </div>
+        <div class="campo">
+          <label for="b-hinicia">Hora de inicio</label>
+          <input type="text" id="b-hinicia" disabled />
+        </div>
+        <div class="campo">
+          <label for="b-htermina">Hora de termina</label>
+          <input type="text" id="b-htermina" disabled />
+        </div>
+        <div class="acciones">
+          <button class="btn-primario" id="btn-eliminar" onclick="eliminarHorario()">Eliminar</button>
+          <button onclick="cancelarVista('borrar')">Cancelar</button>
+        </div>
+      </div>
+      <div id="msg-borrar" class="area-msg"></div>
+    </section>
+
+    <!-- ════════════ LISTADO ════════════ -->
+    <section id="vista-listado">
+      <h2>Listado de horarios</h2>
+      <div class="listado-controles">
+        <div>
+          <label style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:0.2rem;">Ordenar por</label>
+          <select id="l-orden">
+            <option value="idHorario">ID</option>
+            <option value="docente">Docente</option>
+            <option value="materia">Materia</option>
+            <option value="facultad">Facultad</option>
+            <option value="fechaClase">Fecha</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;display:block;margin-bottom:0.2rem;">Búsqueda</label>
+          <input type="text" id="l-q" placeholder="Buscar..." onkeydown="if(event.key==='Enter') buscarListado()" />
+        </div>
+        <button id="btn-buscar-listado" onclick="buscarListado()">Buscar</button>
+        <button onclick="mostrarVista('menu')">Cerrar</button>
+      </div>
+      <div id="resumen-listado"></div>
+      <div class="tabla-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Docente</th>
+              <th>Facultad</th>
+              <th>Carrera</th>
+              <th>Materia</th>
+              <th>Fecha</th>
+              <th>Inicia</th>
+              <th>Termina</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-listado">
+            <tr><td colspan="8" style="text-align:center;color:#888;padding:1rem;">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ════════════ SALIR ════════════ -->
+    <section id="vista-salir">
+      <p>Puede cerrar esta pestaña/ventana del navegador para finalizar.</p>
+      <button onclick="mostrarVista('menu')">Volver al menú</button>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
