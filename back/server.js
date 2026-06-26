@@ -244,6 +244,9 @@ const server = http.createServer(async (req, res) => {
 
 const PORT = 8080;
 
-server.listen(PORT, "127.0.0.1", () => {
-  process.stdout.write(`Servidor iniciado en http://127.0.0.1:${PORT}/\n`);
+const PORT = process.env.PORT || 8080;
+
+server.listen(PORT, "0.0.0.0", () => {
+ console.log(`Servidor iniciado en el puerto ${PORT}`);
 });
+
