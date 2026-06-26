@@ -242,7 +242,7 @@ const server = http.createServer(async (req, res) => {
   sendText(res, 404, "No encontrado");
 });
 
-const PORT = 8080;
+
 
 const PORT = process.env.PORT || 8080;
 
